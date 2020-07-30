@@ -1,7 +1,4 @@
-from copy import deepcopy
 import random
-
-
 class Game:
 	def __init__(self):
 		self.board = []
@@ -12,15 +9,13 @@ class Game:
 
 
 class Board:
-	def __init__(self, board_size, board_file=None):
+	def __init__(self, board_size, obstacle_chance, board_file=None):
 		self.board = [['_'] * board_size for _ in range(board_size)]
 		if board_file:
 			self.load_from_file(board_file)
 		else:
 			# generate a new board
-			obstacles = self.generate_obstacles(board_size, 3, self.load_obstacles('ob.txt'))
-			for x, y in obstacles:
-				self.board[y][x] = 'x'
+			self.generate_obstacles(board_size, obstacle_chance, self.load_obstacles('ob.txt'))
 
 	def load_obstacles(self, filename):
 		"""
@@ -40,49 +35,34 @@ class Board:
 		with open(file_name, 'w') as file:
 			file.write('\n'.join([','.join(line) for line in self.board]))
 
-	def generate_obstacles(self, board_size, obstacle_count, obstacles):
+	def generate_obstacles(self, board_size, obstacle_chance, obstacles):
 		"""
 		Generate obstacle from list of obstacles randomly placed throughout the board
 		:param board_size:
-		:param obstacle_count: number of tiles count as obstacle
+		:param obstacle_chance: number of tiles count as obstacle
 		:param obstacles: list of obstacles
 		:return: board with randomly generated obstacles
 		"""
 		all_obstacles = []
-		count = 0
-		while count < obstacle_count:
-			obstacle = random.choice(obstacles)
-			i = random.randint(1, board_size - max(obstacle, key=lambda ob: ob[0])[0])
-			j = random.randint(1, board_size - max(obstacle, key=lambda ob: ob[1])[1])
-
-			my_obstacle = [(x + i, y + j) for x, y in obstacle]
-			if not self.is_legal_obstacle(my_obstacle, all_obstacles):
-				continue
-			# all_obstacles.append(my_obstacle)
-			all_obstacles += my_obstacle
-			count += 1
-		return all_obstacles
-
-	def is_legal_obstacle(self, obstacle, my_obstacles):
-		"""
-
-		:param obstacle: an array of the obstacle's coordinates
-		:param my_obstacles: an array of all the placed obstacles' coordinates
-		:return:
-		"""
-		for x, y in obstacle:
-			for ob_x, ob_y in my_obstacles:
-				if x - 1 <= ob_x <= x + 1:
-					return False
-				if y - 1 <= ob_y <= y + 1:
-					return False
-		return True
+		for i in range(int(board_size / 4)):
+			for j in range(int(board_size / 4)):
+				if random.random() > obstacle_chance:
+					continue
+				cell_i = 4 * i
+				cell_j = 4 * j
+				curr_i = random.randint(1, 2)
+				curr_j = random.randint(1, 2)
+				ob = random.choice(obstacles)
+				ob = [(col + curr_i + cell_i, row + curr_j + cell_j) for row, col in ob]
+				all_obstacles += ob
+		for x, y in all_obstacles:
+			self.board[y][x] = 'x'
 
 	def __repr__(self):
 		return '\n'.join([' '.join(a) for a in self.board])
 
 
 if __name__ == '__main__':
-	board = Board(15)
+	board = Board(24, 1)
 	print(board)
 	pass
