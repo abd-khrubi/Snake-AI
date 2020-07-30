@@ -44,8 +44,8 @@ class Board:
 		:return: board with randomly generated obstacles
 		"""
 		all_obstacles = []
-		for i in range(int(board_size / 4)):
-			for j in range(int(board_size / 4)):
+		for i in range(int(board_size / 4) + 1):
+			for j in range(int(board_size / 4) + 1):
 				if random.random() > obstacle_chance:
 					continue
 				cell_i = 4 * i
@@ -53,16 +53,17 @@ class Board:
 				curr_i = random.randint(1, 2)
 				curr_j = random.randint(1, 2)
 				ob = random.choice(obstacles)
-				ob = [(col + curr_i + cell_i, row + curr_j + cell_j) for row, col in ob]
+				ob = [(row + curr_j + cell_j, col + curr_i + cell_i) for row, col in ob]
+				ob = [(row, col) for row, col in ob if row < board_size and col < board_size]
 				all_obstacles += ob
-		for x, y in all_obstacles:
-			self.board[y][x] = 'x'
+		for row, col in all_obstacles:
+			self.board[row][col] = 'x'
 
 	def __repr__(self):
 		return '\n'.join([' '.join(a) for a in self.board])
 
 
 if __name__ == '__main__':
-	board = Board(24, 1)
+	board = Board(27, 0.5)
 	print(board)
 	pass
