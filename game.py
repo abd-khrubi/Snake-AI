@@ -2,6 +2,7 @@ import enum
 import random
 import time
 
+from DisplayEngine import DisplayEngine, CliDisplayEngine
 from agent import Agent
 
 
@@ -154,12 +155,14 @@ class Board:
 
 if __name__ == '__main__':
 	board = Board(8, 1)
-	print(board)
+	display: DisplayEngine = CliDisplayEngine()
+	# print(board)
 	board.spawn_snake(2, 2, 3)
-	print(board)
+	# print(board)
 	while True:
 		board.step(Direction.LEFT)
-		print(board)
+		# print(board)
+		display.render(board)
 		time.sleep(1)
 		pass
 	# board.save_to_file('b.txt')
