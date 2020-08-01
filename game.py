@@ -2,7 +2,10 @@ import enum
 import random
 import time
 
-from DisplayEngine import DisplayEngine, CliDisplayEngine
+import pygame
+
+import config
+from DisplayEngine import DisplayEngine, CliDisplayEngine, GUIDisplayEngine
 from agent import Agent
 
 
@@ -154,16 +157,17 @@ class Board:
 
 
 if __name__ == '__main__':
-	board = Board(8, 1)
-	display: DisplayEngine = CliDisplayEngine()
-	# print(board)
+	board = Board(config.BOARD_SIZE, 1)
 	board.spawn_snake(2, 2, 3)
+	display: DisplayEngine = GUIDisplayEngine()
+	# print(board)
 	# print(board)
 	while True:
 		board.step(Direction.LEFT)
 		# print(board)
 		display.render(board)
-		time.sleep(1)
+		pygame.display.update()
+		time.sleep(0.1)
 		pass
 	# board.save_to_file('b.txt')
 	pass
