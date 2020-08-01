@@ -1,4 +1,3 @@
-import enum
 import random
 import time
 
@@ -9,19 +8,6 @@ from DisplayEngine import DisplayEngine, CliDisplayEngine, GUIDisplayEngine
 from agent import Agent
 
 
-class Direction(enum.Enum):
-	LEFT = 1
-	RIGHT = 2
-	UP = 3
-	DOWN = 4
-
-
-class GameState:
-	RUNNING = 1
-	PAUSED = 2
-	ENDED = 3
-
-
 class Game:
 	def __init__(self, board_size, obstacle_chance, board_file=None):
 		self.board = Board(board_size, obstacle_chance, board_file)
@@ -30,9 +16,9 @@ class Game:
 		pass
 
 	def run(self):
-		self.state = GameState.RUNNING
-		while self.state != GameState.ENDED:
-			if self.state == GameState.PAUSED:
+		self.state = config.GameState.RUNNING
+		while self.state != config.GameState.ENDED:
+			if self.state == config.GameState.PAUSED:
 				continue
 			next_dir = self.agent.next_move()
 			self.board.step(next_dir)
@@ -43,6 +29,7 @@ class Game:
 class Board:
 	def __init__(self, board_size, obstacle_chance, board_file=None):
 		self.board_size = board_size
+		self.next_move = config.Direction.LEFT
 		self.snake = []
 		self.obstacles = set()
 		if board_file:
@@ -50,6 +37,9 @@ class Board:
 		else:
 			# generate a new board
 			self.generate_obstacles(board_size, obstacle_chance, self.load_obstacles('ob.txt'))
+
+	def move(self, direction):
+		self.next_move = direction
 
 	@staticmethod
 	def load_obstacles(filename):
@@ -118,16 +108,16 @@ class Board:
 				self.obstacles.remove(part)
 			self.snake.append(part)
 
-	def step(self, direction):
+	def step(self):
 		head_i, head_j = self.snake[0]
-
-		if direction == Direction.LEFT:
+		direction = self.next_move
+		if direction == config.Direction.LEFT:
 			head_j -= 1
-		elif direction == Direction.RIGHT:
+		elif direction == config.Direction.RIGHT:
 			head_j += 1
-		elif direction == Direction.UP:
+		elif direction == config.Direction.UP:
 			head_i -= 1
-		elif direction == Direction.DOWN:
+		elif direction == config.Direction.DOWN:
 			head_i += 1
 
 		head_i = (head_i + self.board_size) % self.board_size
@@ -141,33 +131,36 @@ class Board:
 		print("Lost!!!!!")
 
 	def __repr__(self):
-		s = ''
-		for i in range(self.board_size):
-			for j in range(self.board_size):
-				if (i, j) in self.obstacles:
-					s += 'x '
-				elif self.snake and (i, j) == self.snake[0]:
-					s += '@ '
-				elif self.snake and (i, j) in self.snake:
-					s += 'O '
-				else:
-					s += '_ '
-			s += '\n'
-		return s
+		# s = ''
+		# for i in range(self.board_size):
+		# 	for j in range(self.board_size):
+		# 		if (i, j) in self.obstacles:
+		# 			s += 'x '
+		# 		elif self.snake and (i, j) == self.snake[0]:
+		# 			s += '@ '
+		# 		elif self.snake and (i, j) in self.snake:
+		# 			s += 'O '
+		# 		else:
+		# 			s += '_ '
+		# 	s += '\n'
+		return ''
 
 
 if __name__ == '__main__':
-	board = Board(config.BOARD_SIZE, 1)
+	board = Board(config.BOARD_SIZE, 0.75)
 	board.spawn_snake(2, 2, 3)
-	display: DisplayEngine = GUIDisplayEngine()
+	display = GUIDisplayEngine(board.move)
 	# print(board)
 	# print(board)
 	while True:
-		board.step(Direction.LEFT)
 		# print(board)
-		display.render(board)
 		pygame.display.update()
-		time.sleep(0.1)
+		board.step()
+		display.render(board)
+		# time.sleep(0.1)
+		pygame.display.update()
+		display.clock.tick(15)
+		print(board)
 		pass
 	# board.save_to_file('b.txt')
 	pass
