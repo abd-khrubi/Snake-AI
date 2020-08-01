@@ -4,7 +4,7 @@ import enum
 	Configuration Values for the game
 """
 
-BOARD_SIZE = 25
+BOARD_SIZE = 4
 
 """
 	GUI Constants

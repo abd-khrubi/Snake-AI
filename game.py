@@ -1,17 +1,18 @@
 import random
-import time
 
 import pygame
 
 import config
-from DisplayEngine import DisplayEngine, CliDisplayEngine, GUIDisplayEngine
-from agent import Agent
+from DisplayEngine import GUIDisplayEngine
+from agent import AStarAgent
+
+from util import manhattanDistance
 
 
 class Game:
 	def __init__(self, board_size, obstacle_chance, board_file=None):
 		self.board = Board(board_size, obstacle_chance, board_file)
-		self.agent = Agent(self.board)
+		self.agent = AStarAgent(self.board, lambda x: manhattanDistance(self.board.snake[0], self.board.fruit_location))
 		self.state = None
 		pass
 
@@ -26,14 +27,16 @@ class Game:
 			display.render(self)
 			if self.state == config.GameState.PAUSED:
 				continue
-
+			move = self.agent.next_move()
+			if move:
+				self.board.next_move = move
 			self.board.step()
 			# time.sleep(0.1)
 			pygame.display.update()
 
 			if self.board.snake[0] in self.board.obstacles or self.board.snake[0] in self.board.snake[1:]:
 				self.state = config.GameState.GAME_OVER
-			display.clock.tick(15)
+			display.clock.tick(1)
 		self.board.end_game()
 
 
@@ -131,6 +134,8 @@ class Board:
 			head_i -= 1
 		elif direction == config.Direction.DOWN:
 			head_i += 1
+		else:
+			print(('WRTHbfjk.dbvujl0asb.kasvbndli'))
 
 		head_i = (head_i + self.board_size) % self.board_size
 		head_j = (head_j + self.board_size) % self.board_size
@@ -178,9 +183,12 @@ class Board:
 			s += '\n'
 		return s
 
+	def __eq__(self, other):
+		return isinstance(other, Board) and other.snake == self.snake
+
 
 if __name__ == '__main__':
 	pygame.init()
-	game = Game(config.BOARD_SIZE, 0.2)
+	game = Game(config.BOARD_SIZE, 0)
 	game.run()
 	pass
