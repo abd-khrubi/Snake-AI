@@ -1,4 +1,3 @@
-import enum
 import random
 import time
 
@@ -9,19 +8,6 @@ from DisplayEngine import DisplayEngine, CliDisplayEngine, GUIDisplayEngine
 from agent import Agent
 
 
-class Direction(enum.Enum):
-	LEFT = 1
-	RIGHT = 2
-	UP = 3
-	DOWN = 4
-
-
-class GameState:
-	RUNNING = 1
-	PAUSED = 2
-	ENDED = 3
-
-
 class Game:
 	def __init__(self, board_size, obstacle_chance, board_file=None):
 		self.board = Board(board_size, obstacle_chance, board_file)
@@ -30,26 +16,42 @@ class Game:
 		pass
 
 	def run(self):
-		self.state = GameState.RUNNING
-		while self.state != GameState.ENDED:
-			if self.state == GameState.PAUSED:
-				continue
-			next_dir = self.agent.next_move()
-			self.board.step(next_dir)
 
-		print(f'Game Ended, Score: {len(self.board.snake)}')
+		self.state = config.GameState.PAUSED
+		self.board.spawn_snake(2, 2, 3)
+		self.board.spawn_fruit()
+		display = GUIDisplayEngine(self.board.move)
+		while self.state != config.GameState.GAME_OVER:
+			pygame.display.update()
+			display.render(self)
+			if self.state == config.GameState.PAUSED:
+				continue
+
+			self.board.step()
+			# time.sleep(0.1)
+			pygame.display.update()
+
+			if self.board.snake[0] in self.board.obstacles or self.board.snake[0] in self.board.snake[1:]:
+				self.state = config.GameState.GAME_OVER
+			display.clock.tick(15)
+		self.board.end_game()
 
 
 class Board:
 	def __init__(self, board_size, obstacle_chance, board_file=None):
 		self.board_size = board_size
+		self.next_move = config.Direction.LEFT
 		self.snake = []
 		self.obstacles = set()
+		self.fruit_location = ()
 		if board_file:
 			self.load_from_file(board_file)
 		else:
 			# generate a new board
 			self.generate_obstacles(board_size, obstacle_chance, self.load_obstacles('ob.txt'))
+
+	def move(self, direction):
+		self.next_move = direction
 
 	@staticmethod
 	def load_obstacles(filename):
@@ -118,27 +120,46 @@ class Board:
 				self.obstacles.remove(part)
 			self.snake.append(part)
 
-	def step(self, direction):
+	def step(self):
 		head_i, head_j = self.snake[0]
-
-		if direction == Direction.LEFT:
+		direction = self.next_move
+		if direction == config.Direction.LEFT:
 			head_j -= 1
-		elif direction == Direction.RIGHT:
+		elif direction == config.Direction.RIGHT:
 			head_j += 1
-		elif direction == Direction.UP:
+		elif direction == config.Direction.UP:
 			head_i -= 1
-		elif direction == Direction.DOWN:
+		elif direction == config.Direction.DOWN:
 			head_i += 1
 
 		head_i = (head_i + self.board_size) % self.board_size
 		head_j = (head_j + self.board_size) % self.board_size
-		if (head_i, head_j) in self.obstacles or (head_i, head_j) in self.snake:
-			self.end_game()
+
+		if (head_i, head_j) != self.fruit_location:
+			self.snake.pop()
+		else:
+			self.eat_fruit()
+
 		self.snake.insert(0, (head_i, head_j))
-		self.snake.pop()
+
+	def spawn_fruit(self):
+		"""
+		add fruit to random location on the board
+		"""
+		i = random.randint(0, config.BOARD_SIZE - 1)
+		j = random.randint(0, config.BOARD_SIZE - 1)
+
+		while (i, j) in self.obstacles or (i, j) in self.snake:
+			i = random.randint(0, config.BOARD_SIZE - 1)
+			j = random.randint(0, config.BOARD_SIZE - 1)
+		self.fruit_location = (i, j)
+
+	def eat_fruit(self):
+		self.spawn_fruit()
 
 	def end_game(self):
-		print("Lost!!!!!")
+		# board.save_to_file('b.txt')
+		print(f'Game Ended, Score: {len(self.snake)}')
 
 	def __repr__(self):
 		s = ''
@@ -150,6 +171,8 @@ class Board:
 					s += '@ '
 				elif self.snake and (i, j) in self.snake:
 					s += 'O '
+				elif self.fruit_location == (i, j):
+					s += '$'
 				else:
 					s += '_ '
 			s += '\n'
@@ -157,17 +180,7 @@ class Board:
 
 
 if __name__ == '__main__':
-	board = Board(config.BOARD_SIZE, 1)
-	board.spawn_snake(2, 2, 3)
-	display: DisplayEngine = GUIDisplayEngine()
-	# print(board)
-	# print(board)
-	while True:
-		board.step(Direction.LEFT)
-		# print(board)
-		display.render(board)
-		pygame.display.update()
-		time.sleep(0.1)
-		pass
-	# board.save_to_file('b.txt')
+	pygame.init()
+	game = Game(config.BOARD_SIZE, 0.2)
+	game.run()
 	pass
