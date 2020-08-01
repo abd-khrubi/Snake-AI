@@ -1,7 +1,8 @@
 import config
 import pygame
 
-from config import Direction
+from config import Direction, GameState
+
 
 # from pygame_input import Inputs, Button
 
@@ -14,11 +15,11 @@ class DisplayEngine:
 		"""
 		self.input_cb = input_cb
 
-	def render(self, board):
+	def render(self, game):
 		raise Exception('Unimplemented')
 
 
-class CliDisplayEngine(DisplayEngine):
+class CliDisplayEngine(DisplayEngine):  # TODO game not board
 
 	def render(self, board):
 		s = ''
@@ -33,7 +34,7 @@ class CliDisplayEngine(DisplayEngine):
 				else:
 					s += '_ '
 			s += '\n'
-			print(s)
+			print(s)  #
 
 
 class GUIDisplayEngine(DisplayEngine):
@@ -44,25 +45,22 @@ class GUIDisplayEngine(DisplayEngine):
 		self.clock = pygame.time.Clock()
 
 		self.screen.fill((0, 0, 0))
-		#
-		# inputs = Inputs()
-		# inputs['left'] = Button(pygame.K_LEFT)
-		# inputs['left'].on_press(lambda x: self.input_cb(config.Direction.LEFT))
-		# inputs['up'] = Button(pygame.K_UP)
-		# inputs['up'].on_press(lambda x: self.input_cb(config.Direction.UP))
 
-	def render(self, board):
+	def render(self, game):
+		board = game.board
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				pygame.quit()
 			if event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_LEFT:
+				if game.state == GameState.PAUSED:
+					game.state = GameState.RUNNING
+				if event.key == pygame.K_LEFT and board.next_move != config.Direction.RIGHT:
 					self.input_cb(config.Direction.LEFT)
-				elif event.key == pygame.K_UP:
+				elif event.key == pygame.K_UP and board.next_move != config.Direction.DOWN:
 					self.input_cb(config.Direction.UP)
-				if event.key == pygame.K_DOWN:
+				elif event.key == pygame.K_DOWN and board.next_move != config.Direction.UP:
 					self.input_cb(config.Direction.DOWN)
-				elif event.key == pygame.K_RIGHT:
+				elif event.key == pygame.K_RIGHT and board.next_move != config.Direction.LEFT:
 					self.input_cb(config.Direction.RIGHT)
 
 		self.screen.fill((0, 0, 0))
@@ -82,17 +80,19 @@ class GUIDisplayEngine(DisplayEngine):
 				if (row, col) == board.snake[0]:
 					# draw head
 					pygame.draw.rect(self.screen, (0, 0, 225), rect)
-					pass
+
+				elif (row, col) == board.fruit_location:
+					# draw fruit
+					pygame.draw.rect(self.screen, (0, 255, 0), rect)
 				elif (row, col) in board.snake:
 					pygame.draw.rect(self.screen, (255, 0, 255), rect)
-					# draw body part
-					pass
+				# draw body part
+
 				elif (row, col) in board.obstacles:
 					pygame.draw.rect(self.screen, (255, 0, 0), rect)
-					# draw obstacle
-					pass
+				# draw obstacle
 
-		# pygame.display.update()
+	# pygame.display.update()
 
 
 if __name__ == '__main__':

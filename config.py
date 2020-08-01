@@ -4,7 +4,7 @@ import enum
 	Configuration Values for the game
 """
 
-BOARD_SIZE = 20
+BOARD_SIZE = 25
 
 """
 	GUI Constants
@@ -25,7 +25,7 @@ class Direction(enum.Enum):
 	DOWN = 4
 
 
-class GameState:
+class GameState(enum.Enum):
 	RUNNING = 1
 	PAUSED = 2
-	ENDED = 3
+	GAME_OVER = 3

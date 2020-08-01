@@ -16,14 +16,25 @@ class Game:
 		pass
 
 	def run(self):
-		self.state = config.GameState.RUNNING
-		while self.state != config.GameState.ENDED:
+
+		self.state = config.GameState.PAUSED
+		self.board.spawn_snake(2, 2, 3)
+		self.board.spawn_fruit()
+		display = GUIDisplayEngine(self.board.move)
+		while self.state != config.GameState.GAME_OVER:
+			pygame.display.update()
+			display.render(self)
 			if self.state == config.GameState.PAUSED:
 				continue
-			next_dir = self.agent.next_move()
-			self.board.step(next_dir)
 
-		print(f'Game Ended, Score: {len(self.board.snake)}')
+			self.board.step()
+			# time.sleep(0.1)
+			pygame.display.update()
+
+			if self.board.snake[0] in self.board.obstacles or self.board.snake[0] in self.board.snake[1:]:
+				self.state = config.GameState.GAME_OVER
+			display.clock.tick(15)
+		self.board.end_game()
 
 
 class Board:
@@ -32,6 +43,7 @@ class Board:
 		self.next_move = config.Direction.LEFT
 		self.snake = []
 		self.obstacles = set()
+		self.fruit_location = ()
 		if board_file:
 			self.load_from_file(board_file)
 		else:
@@ -122,45 +134,53 @@ class Board:
 
 		head_i = (head_i + self.board_size) % self.board_size
 		head_j = (head_j + self.board_size) % self.board_size
-		if (head_i, head_j) in self.obstacles or (head_i, head_j) in self.snake:
-			self.end_game()
+
+		if (head_i, head_j) != self.fruit_location:
+			self.snake.pop()
+		else:
+			self.eat_fruit()
+
 		self.snake.insert(0, (head_i, head_j))
-		self.snake.pop()
+
+	def spawn_fruit(self):
+		"""
+		add fruit to random location on the board
+		"""
+		i = random.randint(0, config.BOARD_SIZE - 1)
+		j = random.randint(0, config.BOARD_SIZE - 1)
+
+		while (i, j) in self.obstacles or (i, j) in self.snake:
+			i = random.randint(0, config.BOARD_SIZE - 1)
+			j = random.randint(0, config.BOARD_SIZE - 1)
+		self.fruit_location = (i, j)
+
+	def eat_fruit(self):
+		self.spawn_fruit()
 
 	def end_game(self):
-		print("Lost!!!!!")
+		# board.save_to_file('b.txt')
+		print(f'Game Ended, Score: {len(self.snake)}')
 
 	def __repr__(self):
-		# s = ''
-		# for i in range(self.board_size):
-		# 	for j in range(self.board_size):
-		# 		if (i, j) in self.obstacles:
-		# 			s += 'x '
-		# 		elif self.snake and (i, j) == self.snake[0]:
-		# 			s += '@ '
-		# 		elif self.snake and (i, j) in self.snake:
-		# 			s += 'O '
-		# 		else:
-		# 			s += '_ '
-		# 	s += '\n'
-		return ''
+		s = ''
+		for i in range(self.board_size):
+			for j in range(self.board_size):
+				if (i, j) in self.obstacles:
+					s += 'x '
+				elif self.snake and (i, j) == self.snake[0]:
+					s += '@ '
+				elif self.snake and (i, j) in self.snake:
+					s += 'O '
+				elif self.fruit_location == (i, j):
+					s += '$'
+				else:
+					s += '_ '
+			s += '\n'
+		return s
 
 
 if __name__ == '__main__':
-	board = Board(config.BOARD_SIZE, 0.75)
-	board.spawn_snake(2, 2, 3)
-	display = GUIDisplayEngine(board.move)
-	# print(board)
-	# print(board)
-	while True:
-		# print(board)
-		pygame.display.update()
-		board.step()
-		display.render(board)
-		# time.sleep(0.1)
-		pygame.display.update()
-		display.clock.tick(15)
-		print(board)
-		pass
-	# board.save_to_file('b.txt')
+	pygame.init()
+	game = Game(config.BOARD_SIZE, 0.2)
+	game.run()
 	pass
