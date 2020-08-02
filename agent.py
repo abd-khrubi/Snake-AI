@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 from config import Direction
-from util import PriorityQueueWithFunction, cyclic, manhattanDistance
+from util import PriorityQueueWithFunction, cyclic
 
 
 class State:
@@ -15,17 +15,24 @@ class State:
 	def is_goal(self):
 		return self.board.snake[0] == self.board.fruit_location
 
-	def get_legal_action(self):
+	def _is_legal_move(self, i, j):
 		board_size = self.board.board_size
+		i = cyclic(i, board_size)
+		j = cyclic(j, board_size)
+		return \
+			0 <= i < board_size and 0 <= j < board_size \
+			and (i, j) not in self.board.obstacles and (i, j) not in self.board.snake
+
+	def get_legal_action(self):
 		legal_actions = {Direction.LEFT, Direction.RIGHT, Direction.UP, Direction.DOWN}
 		i, j = self.board.snake[0]
-		if (cyclic(i - 1, board_size), j) in self.board.obstacles or (cyclic(i - 1, board_size), j) in self.board.snake:
-			legal_actions.remove(Direction.DOWN)
-		if (cyclic(i + 1, board_size), j) in self.board.obstacles or (cyclic(i + 1, board_size), j) in self.board.snake:
+		if not self._is_legal_move(i - 1, j):
 			legal_actions.remove(Direction.UP)
-		if (i, cyclic(j - 1, board_size)) in self.board.obstacles or (i, cyclic(j - 1, board_size)) in self.board.snake:
+		if not self._is_legal_move(i + 1, j):
+			legal_actions.remove(Direction.DOWN)
+		if not self._is_legal_move(i, j - 1):
 			legal_actions.remove(Direction.LEFT)
-		if (i, cyclic(j + 1, board_size)) in self.board.obstacles or (i, cyclic(j + 1, board_size)) in self.board.snake:
+		if not self._is_legal_move(i, j + 1):
 			legal_actions.remove(Direction.RIGHT)
 
 		return list(legal_actions)
@@ -38,22 +45,19 @@ class State:
 
 
 class Agent:
-	def __init__(self, board):
-		self.board = board
 
-	def next_move(self):
+	def next_move(self, board):
 		raise Exception('Method not implemented!')
 
 
 class AStarAgent(Agent):
-	def __init__(self, board, heuristics):
-		super().__init__(board)
+	def __init__(self, heuristics):
 		self.heuristic_function = heuristics
 		self.moves = []
 
-	def next_move(self):
+	def next_move(self, board):
 		if not self.moves:
-			self.moves = self.search(self.board)
+			self.moves = self.search(board)
 			if not self.moves:
 				return None
 		return self.moves.pop()
@@ -67,10 +71,11 @@ class AStarAgent(Agent):
 		visited = []
 
 		while not fringe.isEmpty():
+			# print(f'Open: {len(fringe)}, Close: {len(visited)}')
 			item: State = fringe.pop()
 			if item in visited:
 				continue
-
+			visited.append(item)
 			if item.is_goal():
 				return item.path
 
@@ -78,6 +83,6 @@ class AStarAgent(Agent):
 				new_board = deepcopy(item.board)
 				new_board.next_move = move
 				new_board.step()
-				new_state = State(new_board, item.g + 1, self.heuristic_function, item.path + [move])
+				new_state = State(new_board, item.g + 1, self.heuristic_function, [move] + item.path)
 				fringe.push(new_state)
 		return []

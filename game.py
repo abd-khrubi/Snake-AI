@@ -12,14 +12,14 @@ from util import manhattanDistance
 class Game:
 	def __init__(self, board_size, obstacle_chance, board_file=None):
 		self.board = Board(board_size, obstacle_chance, board_file)
-		self.agent = AStarAgent(self.board, lambda x: manhattanDistance(self.board.snake[0], self.board.fruit_location))
+		self.agent = AStarAgent(lambda x: manhattanDistance(x.snake[0], x.fruit_location))
 		self.state = None
 		pass
 
 	def run(self):
 
 		self.state = config.GameState.PAUSED
-		self.board.spawn_snake(2, 2, 3)
+		self.board.spawn_snake(2, 2, 1)
 		self.board.spawn_fruit()
 		display = GUIDisplayEngine(self.board.move)
 		while self.state != config.GameState.GAME_OVER:
@@ -27,7 +27,7 @@ class Game:
 			display.render(self)
 			if self.state == config.GameState.PAUSED:
 				continue
-			move = self.agent.next_move()
+			move = self.agent.next_move(self.board)
 			if move:
 				self.board.next_move = move
 			self.board.step()
@@ -36,7 +36,10 @@ class Game:
 
 			if self.board.snake[0] in self.board.obstacles or self.board.snake[0] in self.board.snake[1:]:
 				self.state = config.GameState.GAME_OVER
-			display.clock.tick(1)
+			if self.board.snake[0] == self.board.fruit_location:
+				self.board.eat_fruit()
+			display.render(self)
+			display.clock.tick(config.FRAME_RATE)
 		self.board.end_game()
 
 
@@ -134,16 +137,12 @@ class Board:
 			head_i -= 1
 		elif direction == config.Direction.DOWN:
 			head_i += 1
-		else:
-			print(('WRTHbfjk.dbvujl0asb.kasvbndli'))
 
 		head_i = (head_i + self.board_size) % self.board_size
 		head_j = (head_j + self.board_size) % self.board_size
 
 		if (head_i, head_j) != self.fruit_location:
 			self.snake.pop()
-		else:
-			self.eat_fruit()
 
 		self.snake.insert(0, (head_i, head_j))
 
@@ -177,14 +176,14 @@ class Board:
 				elif self.snake and (i, j) in self.snake:
 					s += 'O '
 				elif self.fruit_location == (i, j):
-					s += '$'
+					s += '$ '
 				else:
 					s += '_ '
 			s += '\n'
 		return s
 
 	def __eq__(self, other):
-		return isinstance(other, Board) and other.snake == self.snake
+		return isinstance(other, Board) and other.snake[0] == self.snake[0]
 
 
 if __name__ == '__main__':
