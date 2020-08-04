@@ -1,7 +1,7 @@
 import random, math
 from agent import Agent
 from config import Direction
-from qlearning_game import *
+from game import *
 from util import cyclic, Counter
 import util
 
@@ -17,6 +17,51 @@ class QLearningAgent(Agent):
         self.q_table = dict()
 
         self.values = Counter()  # Q(s, a)
+
+        self.current_state = 0
+        self.new_state = 0
+        self.fruit_relative_position_before = []
+        self.fruit_relative_position_after = []
+
+    def reward(self, move, reward, after_hit=True):
+        if after_hit:
+            self.update(self.current_state, self.find_action(move), self.new_state, reward)
+
+        else:
+
+            if self.fruit_relative_position_after[0] <= self.fruit_relative_position_after[0] and \
+                    self.fruit_relative_position_after[1] <= self.fruit_relative_position_before[1]:
+                self.update(self.current_state, self.find_action(move), self.new_state, 1)
+            else:
+                self.update(self.current_state, self.find_action(move), self.new_state, -1)
+
+    def update_current_state(self, board):
+        self.current_state = self.get_current_state(board)
+        fruit_x = board.fruit_location[0]
+        fruit_y = board.fruit_location[1]
+
+        snake_x_before = board.snake[0][0]
+        snake_y_before = board.snake[0][1]
+        board_size = board.board_size
+
+        fruit_relative_x_before = cyclic(fruit_x - snake_x_before, board_size)
+        fruit_relative_y_before = cyclic(fruit_y - snake_y_before, board_size)
+
+        self.fruit_relative_position_before = [fruit_relative_x_before, fruit_relative_y_before]
+
+    def update_new_state(self, board):
+        self.new_state = self.get_current_state(board)
+        fruit_x = board.fruit_location[0]
+        fruit_y = board.fruit_location[1]
+
+        snake_x_before = board.snake[0][0]
+        snake_y_before = board.snake[0][1]
+        board_size = board.board_size
+
+        fruit_relative_x_after = cyclic(fruit_x - snake_x_before, board_size)
+        fruit_relative_y_after = cyclic(fruit_y - snake_y_before, board_size)
+
+        self.fruit_relative_position_after = [fruit_relative_x_after, fruit_relative_y_after]
 
     def get_current_state_head(self, board):
         """
@@ -103,13 +148,13 @@ class QLearningAgent(Agent):
         fruit_y = fruit_position[1]
 
         up = 1 if (snake_x, cyclic(snake_y - 1, board_size)) in snake or (
-        snake_x, cyclic(snake_y - 1, board_size)) in board.obstacles else 0
+            snake_x, cyclic(snake_y - 1, board_size)) in board.obstacles else 0
         down = 1 if (snake_x, cyclic(snake_y + 1, board_size)) in snake or (
-        snake_x, cyclic(snake_y + 1, board_size)) in board.obstacles else 0
+            snake_x, cyclic(snake_y + 1, board_size)) in board.obstacles else 0
         left = 1 if (cyclic(snake_x - 1, board_size), snake_y) in snake or (
-        cyclic(snake_x - 1, board_size), snake_y) in board.obstacles else 0
+            cyclic(snake_x - 1, board_size), snake_y) in board.obstacles else 0
         right = 1 if (cyclic(snake_x + 1, board_size), snake_y) in snake or (
-        cyclic(snake_x + 1, board_size), snake_y) in board.obstacles else 0
+            cyclic(snake_x + 1, board_size), snake_y) in board.obstacles else 0
 
         state_name = str(left) + str(up) + str(right) + str(down)
 
@@ -144,7 +189,7 @@ class QLearningAgent(Agent):
 
         return state_name
 
-    def get_current_state_ol(self, board): ##NOT USED
+    def get_current_state_ol(self, board):  ##NOT USED
         game_board: Board = board  # TODO remove this line
         snake = game_board.snake
         fruit_position = game_board.fruit_location

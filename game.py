@@ -30,17 +30,7 @@ class Game:
             if self.state == config.GameState.PAUSED:
                 continue
 
-            ## q learning shit
-            current_state = self.agent.get_current_state(self.board)
-            fruit_x = self.board.fruit_location[0]
-            fruit_y = self.board.fruit_location[1]
-
-            snake_x_before = self.board.snake[0][0]
-            snake_y_before = self.board.snake[0][1]
-            board_size = self.board.board_size
-
-            fruit_relative_x_before = cyclic(fruit_x - snake_x_before, board_size)
-            fruit_relative_y_before = cyclic(fruit_y - snake_y_before, board_size)
+            self.agent.update_current_state(self.board)
 
             move = self.agent.next_move(self.board)
             if move:
@@ -49,41 +39,22 @@ class Game:
             # time.sleep(0.1)
             pygame.display.update()
 
-            new_state = self.agent.get_current_state(self.board)
+            self.agent.update_new_state(self.board)
 
             if self.board.snake[0] in self.board.obstacles or self.board.snake[0] in self.board.snake[1:]:
                 self.state = config.GameState.GAME_OVER
-                self.agent.update(current_state, self.agent.find_action(move), new_state, -100)
-            # self.agent.update_values(current_state, new_state, -1, self.agent.find_action(move))
+                self.agent.reward(move, -100)
 
             elif self.board.snake[0] == self.board.fruit_location:
                 if len(self.board.snake) > pow(self.board.board_size, 2) - 1:
                     self.state = config.GameState.GAME_OVER
-                    self.agent.update(current_state, self.agent.find_action(move), new_state, 50)
+                    self.agent.reward(move, 50)
                 else:
                     self.board.eat_fruit()
-                    self.agent.update(current_state, self.agent.find_action(move), new_state, 30)
-            # self.agent.update_values(current_state, new_state, 1, self.agent.find_action(move))
-
-            elif len(self.board.snake) >= pow(self.board.board_size, 2) - 1:
-                self.state = config.GameState.GAME_OVER
-                self.agent.update(current_state, self.agent.find_action(move), new_state, 50)
+                    self.agent.reward(move, 30)
 
             else:
-                snake_x_after = self.board.snake[0][0]
-                snake_y_after = self.board.snake[0][1]
-
-                fruit_relative_x_after = cyclic(fruit_x - snake_x_after, board_size)
-                fruit_relative_y_after = cyclic(fruit_y - snake_y_after, board_size)
-
-                if fruit_relative_x_after <= fruit_relative_x_before and fruit_relative_y_after <= fruit_relative_y_before:
-                    self.agent.update(current_state, self.agent.find_action(move), new_state, 1)
-                else:
-                    self.agent.update(current_state, self.agent.find_action(move), new_state, -1)
-            # self.agent.update_values(current_state, new_state, -0.1, self.agent.find_action(move))
-
-            # else:
-            # 	self.agent.update_values(current_state, new_state, -0.1, self.agent.find_action(move))
+                self.agent.reward(move, 0, after_hit=False)
 
             display.render(self)
             display.clock.tick(config.FRAME_RATE)
@@ -241,8 +212,7 @@ def score_helper(scores, num):
         if i >= num:
             counter += 1
 
-    return (counter/scores_sum) * 100
-
+    return (counter / scores_sum) * 100
 
 
 if __name__ == '__main__':
@@ -252,10 +222,9 @@ if __name__ == '__main__':
     top_score = 0
     agent.read_qtable()
 
-
     for i in range(6000):
 
-        game = Game(config.BOARD_SIZE, 0, agent=agent)
+        game = Game(config.BOARD_SIZE, 1, agent=agent)
 
         game.run()
         score = len(game.board.snake)
