@@ -49,6 +49,15 @@ class Agent:
 	def next_move(self, board):
 		raise Exception('Method not implemented!')
 
+	def reward(self, move, reward, after_hit=True):
+		raise Exception('Method not implemented!')
+
+	def update_current_state(self, board):
+		raise Exception('Method not implemented!')
+
+	def update_new_state(self, board):
+		raise Exception('Method not implemented!')
+
 
 class AStarAgent(Agent):
 	def __init__(self, heuristics):
@@ -86,3 +95,12 @@ class AStarAgent(Agent):
 				new_state = State(new_board, item.g + 1, self.heuristic_function, [move] + item.path)
 				fringe.push(new_state)
 		return []
+
+	def reward(self, move, reward, after_hit=True):
+		pass
+
+	def update_new_state(self, board):
+		pass
+
+	def update_current_state(self, board):
+		pass
