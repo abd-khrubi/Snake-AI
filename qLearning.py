@@ -14,7 +14,6 @@ class QLearningAgent(Agent):
         self.random_rate = random_rate
         # self.actions_space = [Direction.LEFT, Direction.RIGHT, Direction.UP, Direction.DOWN]
         self.actions_space = [0, 1, 2, 3]
-        self.q_table = dict()
 
         self.values = Counter()  # Q(s, a)
 
@@ -23,49 +22,61 @@ class QLearningAgent(Agent):
         self.fruit_relative_position_before = []
         self.fruit_relative_position_after = []
 
+        self.fruit_position = 0
+        self.current_fruit_position = 0
+
+        self.counter = 0
+
+    def update_fruit_location(self, new_location):
+        self.fruit_position = new_location
+
     def reward(self, move, reward, after_hit=True):
         if after_hit:
             self.update(self.current_state, self.find_action(move), self.new_state, reward)
 
         else:
 
-            if self.fruit_relative_position_after[0] <= self.fruit_relative_position_after[0] and \
-                    self.fruit_relative_position_after[1] <= self.fruit_relative_position_before[1]:
-                self.update(self.current_state, self.find_action(move), self.new_state, 1)
-            else:
-                self.update(self.current_state, self.find_action(move), self.new_state, -1)
+            # if self.fruit_relative_position_after[0] <= self.fruit_relative_position_after[0] and \
+            #         self.fruit_relative_position_after[1] <= self.fruit_relative_position_before[1]:
+            #     self.update(self.current_state, self.find_action(move), self.new_state, 1)
+
+            # if sum(self.fruit_relative_position_after) <= sum(self.fruit_relative_position_before):
+            #     self.update(self.current_state, self.find_action(move), self.new_state, 2)
+            # else:
+            self.update(self.current_state, self.find_action(move), self.new_state, -10)
 
     def update_current_state(self, board):
+
         self.current_state = self.get_current_state(board)
+        self.current_fruit_position = board.fruit_location
+        self.counter += 1
+
         fruit_x = board.fruit_location[0]
         fruit_y = board.fruit_location[1]
-
         snake_x_before = board.snake[0][0]
         snake_y_before = board.snake[0][1]
-        board_size = board.board_size
 
-        fruit_relative_x_before = cyclic(fruit_x - snake_x_before, board_size)
-        fruit_relative_y_before = cyclic(fruit_y - snake_y_before, board_size)
+        fruit_relative_x_before = abs(fruit_x - snake_x_before)
+        fruit_relative_y_before = abs(fruit_y - snake_y_before)
 
         self.fruit_relative_position_before = [fruit_relative_x_before, fruit_relative_y_before]
 
     def update_new_state(self, board):
+
         self.new_state = self.get_current_state(board)
         fruit_x = board.fruit_location[0]
         fruit_y = board.fruit_location[1]
-
         snake_x_before = board.snake[0][0]
         snake_y_before = board.snake[0][1]
-        board_size = board.board_size
 
-        fruit_relative_x_after = cyclic(fruit_x - snake_x_before, board_size)
-        fruit_relative_y_after = cyclic(fruit_y - snake_y_before, board_size)
+        fruit_relative_x_after = abs(fruit_x - snake_x_before)
+        fruit_relative_y_after = abs(fruit_y - snake_y_before)
 
         self.fruit_relative_position_after = [fruit_relative_x_after, fruit_relative_y_after]
 
-    def get_current_state_head(self, board):
+    def get_current_state_(self, board):
         """
-        DIDNT USE... Check the 3 blocks around the head of the snake
+        DIDNT USE... Check the 3 blocks around the head of the snake and relative positions of fruit and tail to head
         :param board:
         :return:
         """
@@ -81,8 +92,6 @@ class QLearningAgent(Agent):
         direction = board.next_move
 
         left = right = up = 0
-
-        state_name = ""
 
         if direction == Direction.LEFT:
             left = (snake_x, cyclic(snake_y + 1, board_size))
@@ -104,46 +113,35 @@ class QLearningAgent(Agent):
             up = (snake_x, cyclic(snake_y + 1, board_size))
             right = (cyclic(snake_x - 1, board_size), snake_y)
 
-        if left == fruit_position:
-            state_name = "1"
-        elif left in snake:
-            state_name = "2"
+        if left in snake or left in board.obstacles:
+            state_name = '1'
         else:
-            state_name = "0"
+            state_name = '0'
 
-        if up == fruit_position:
-            state_name += ",1"
-        elif up in snake:
-            state_name += ",2"
+        if up in snake or up in board.obstacles:
+            state_name += '1'
         else:
-            state_name += ",0"
+            state_name += '0'
 
-        if right == fruit_position:
-            state_name += ",1"
-        elif right in snake:
-            state_name += ",2"
+        if right in snake or right in board.obstacles:
+            state_name += '1'
         else:
-            state_name += ",0"
+            state_name += '0'
 
-        state_name += ',' + str(cyclic(snake_x - fruit_x, board_size))
-        state_name += ',' + str(cyclic(snake_y - fruit_y, board_size))
+        state_name += str(fruit_x - snake_x) + str(fruit_y - snake_y)
+
+        state_name += str(snake[len(snake) - 1][0] - snake_x) + str(snake[len(snake) - 1][1] - snake_y)
 
         return state_name
 
     def get_current_state(self, board):
-        """
-        Check the 4 blocks around the head of the snake for obstacles
-        And check where the fruit is located relative to the head of the snake (NW, N, NE, E, SE, S, SW, W)
-        :param board:
-        :return:
-        """
+
         snake = board.snake
         snake_x = snake[0][0]
         snake_y = snake[0][1]
         fruit_position = board.fruit_location
         board_size = board.board_size
-        # fruit_x = cyclic(fruit_position[0], board_size)
-        # fruit_y = cyclic(fruit_position[1], board_size)
+
         fruit_x = fruit_position[0]
         fruit_y = fruit_position[1]
 
@@ -155,6 +153,11 @@ class QLearningAgent(Agent):
             cyclic(snake_x - 1, board_size), snake_y) in board.obstacles else 0
         right = 1 if (cyclic(snake_x + 1, board_size), snake_y) in snake or (
             cyclic(snake_x + 1, board_size), snake_y) in board.obstacles else 0
+
+        up = 2 if (snake_x, cyclic(snake_y - 1, board_size)) in fruit_position else up
+        down = 2 if (snake_x, cyclic(snake_y + 1, board_size)) in fruit_position else down
+        left = 2 if (cyclic(snake_x - 1, board_size), snake_y) in fruit_position else left
+        right = 2 if (cyclic(snake_x + 1, board_size), snake_y) in fruit_position else right
 
         state_name = str(left) + str(up) + str(right) + str(down)
 
@@ -185,46 +188,7 @@ class QLearningAgent(Agent):
         elif fruit_relative_x < 0 and fruit_relative_y == 0:
             state_name += '00000001'
 
-        # state_name += ',' + str(cyclic(fruit_relative_x, board_size)) + str(cyclic(fruit_relative_y, board_size))
-
-        return state_name
-
-    def get_current_state_ol(self, board):  ##NOT USED
-        game_board: Board = board  # TODO remove this line
-        snake = game_board.snake
-        fruit_position = game_board.fruit_location
-
-        fruit_relative_position = [fruit_position[i] - snake[0][i] for i in range(len(fruit_position))]
-
-        while fruit_relative_position[0] < 0:
-            fruit_relative_position[0] += len(snake)
-
-        while fruit_relative_position[0] > len(snake):
-            fruit_relative_position[0] -= len(snake)
-
-        while fruit_relative_position[1] < 0:
-            fruit_relative_position[1] += len(snake)
-
-        while fruit_relative_position[1] > len(snake):
-            fruit_relative_position[1] -= len(snake)
-
-        state_name = str(fruit_relative_position[0]) + ',' + str(fruit_relative_position[1])
-
-        tail_relative_position = [snake[len(snake) - 1][i] - snake[0][i] for i in range(len(snake[0]))]
-
-        while tail_relative_position[0] < 0:
-            tail_relative_position[0] += len(snake)
-
-        while tail_relative_position[0] > len(snake):
-            tail_relative_position[0] -= len(snake)
-
-        while tail_relative_position[1] < 0:
-            tail_relative_position[1] += len(snake)
-
-        while tail_relative_position[1] > len(snake):
-            tail_relative_position[1] -= len(snake)
-
-        state_name += ',' + str(tail_relative_position[0]) + ',' + str(tail_relative_position[1])
+        # state_name += str(manhattanDistance([snake_x, snake_y], [fruit_x, fruit_y]))
 
         return state_name
 
@@ -232,15 +196,17 @@ class QLearningAgent(Agent):
         current_state = self.get_current_state(board)
         action = self.getAction(current_state)
 
-        if action == 0:
-            return Direction.LEFT
-        elif action == 1:
-            return Direction.RIGHT
-        elif action == 2:
-            return Direction.UP
-        elif action == 3:
-            return Direction.DOWN
-        return action
+        while True:
+            if action == 0 and board.next_move != Direction.RIGHT:
+                return Direction.LEFT
+            elif action == 1 and board.next_move != Direction.LEFT:
+                return Direction.RIGHT
+            elif action == 2 and board.next_move != Direction.DOWN:
+                return Direction.UP
+            elif action == 3 and board.next_move != Direction.UP:
+                return Direction.DOWN
+
+            action = self.getAction(current_state)
 
     def find_action(self, action):
         if action == Direction.LEFT:
@@ -318,6 +284,11 @@ class QLearningAgent(Agent):
         # Pick Action
         legal_actions = self.getLegalActions(state)
         action = None
+        if self.counter > 1000 and self.fruit_position == self.current_fruit_position:
+            print(str(self.counter) + ' random................................................')
+            action = random.choice(legal_actions)
+            self.counter = 0
+
         if util.flipCoin(self.random_rate):
             if legal_actions:
                 action = random.choice(legal_actions)
@@ -329,7 +300,6 @@ class QLearningAgent(Agent):
         f = open(path, 'w')
         for k, v in self.values.items():
             f.write(str(k[0]) + ':' + str(k[1]) + ':' + str(v) + '\n')
-        # f.write(str(self.values))
         f.close()
 
     def read_qtable(self, path='qtable.txt'):
@@ -343,9 +313,3 @@ class QLearningAgent(Agent):
             self.values[(line[0], float(line[1]))] = float(line[2])
             line = f.readline()
         print(self.values)
-
-    def print_table(self):
-        print(self.values)
-
-    def reset(self):
-        pass

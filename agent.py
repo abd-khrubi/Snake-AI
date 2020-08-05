@@ -58,6 +58,10 @@ class Agent:
 	def update_new_state(self, board):
 		raise Exception('Method not implemented!')
 
+	def update_fruit_location(self, new_location):
+		raise Exception('Method not implemented!')
+
+
 
 class AStarAgent(Agent):
 	def __init__(self, heuristics):
@@ -103,4 +107,7 @@ class AStarAgent(Agent):
 		pass
 
 	def update_current_state(self, board):
+		pass
+
+	def update_fruit_location(self, new_location):
 		pass
