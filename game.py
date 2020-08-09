@@ -4,7 +4,7 @@ import pygame
 
 import config
 from DisplayEngine import GUIDisplayEngine
-from agent import AStarAgent
+from agent import HamiltonianAgent
 from qLearning import *
 from util import manhattanDistance
 
@@ -217,29 +217,7 @@ def score_helper(scores, num):
 
 if __name__ == '__main__':
     pygame.init()
-    agent = QLearningAgent(0.9, 0.85, 0.05)
-    scores = []
-    top_score = 0
-    agent.read_qtable()
-
-    for i in range(6000):
-
-        game = Game(config.BOARD_SIZE, 1, agent=agent)
-
+    agent = HamiltonianAgent(config.BOARD_SIZE)
+    game = Game(config.BOARD_SIZE, 0, None, agent)
+    while True:
         game.run()
-        score = len(game.board.snake)
-        if score > top_score:
-            top_score = score
-        scores.append(score)
-        print(str(i) + ' top score: ' + str(top_score) + ' half board: ' + str(score_helper(scores, 18)) + '%')
-        agent.write_qtable()
-    game.agent.print_table()
-    print(scores)
-
-    config.FRAME_RATE = 10
-
-    game = Game(config.BOARD_SIZE, 0, agent=agent)
-
-    game.run()
-    game.run()
-    game.run()

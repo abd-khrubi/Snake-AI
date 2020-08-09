@@ -65,13 +65,13 @@ class GUIDisplayEngine(DisplayEngine):
 
 		self.screen.fill((0, 0, 0))
 		block_size = config.BLOCK_SIZE
-		for row in range(config.BOARD_SIZE):
-			for col in range(config.BOARD_SIZE):
-				rect = pygame.Rect(
-					row * block_size, col * block_size, block_size,
-					block_size
-				)
-				pygame.draw.rect(self.screen, (200, 200, 200), rect, 1)
+		# for row in range(config.BOARD_SIZE):
+		# 	for col in range(config.BOARD_SIZE):
+		# 		rect = pygame.Rect(
+		# 			row * block_size, col * block_size, block_size,
+		# 			block_size
+		# 		)
+		# 		pygame.draw.rect(self.screen, (200, 200, 200), rect, 1)
 		for row in range(config.BOARD_SIZE):
 			for col in range(config.BOARD_SIZE):
 				i = row * block_size

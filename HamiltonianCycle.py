@@ -1,6 +1,6 @@
 import numpy as np
 
-from agent import Direction
+from config import Direction
 
 
 class Node:
@@ -18,7 +18,23 @@ class Maze:
 		self.tour_to_number = np.zeros(self.arena_size, dtype=int)
 
 	def get_path_number(self, x, y):
-		return self.tour_to_number[x + self.board_size * y]
+		return self.tour_to_number[(x + self.board_size * y) % self.arena_size]
+
+	def get_next_dir(self, x, y):
+		"""
+		(x, y) is the snake's head
+		"""
+		pos = self.get_path_number(x, y)
+		if pos + 1 == self.arena_size:
+			pos = -1
+		if x > 0 and self.get_path_number(x - 1, y) == pos + 1:
+			return Direction.LEFT
+		elif y > 0 and self.get_path_number(x, y - 1) == pos + 1:
+			return Direction.UP
+		elif x <= self.board_size - 1 and self.get_path_number(x + 1, y) == pos + 1:
+			return Direction.RIGHT
+		elif y <= self.board_size and self.get_path_number(x, y + 1) == pos + 1:
+			return Direction.DOWN
 
 	def path_distance(self, coord_a, coord_b):
 		if coord_a < coord_b:
@@ -90,7 +106,7 @@ class Maze:
 		self.generate_r(x, y, x, y + 1)
 		self.generate_r(x, y, x, y - 1)
 
-	def find_next_dir(self, x, y, snake_dir: Direction):
+	def _find_next_dir(self, x, y, snake_dir: Direction):
 		if snake_dir == Direction.RIGHT:
 			if self.can_go_up(x, y):
 				return Direction.UP
@@ -143,7 +159,7 @@ class Maze:
 		snake_dir = start_dir
 		tour_num = 0
 		while tour_num != self.arena_size:
-			next_dir = self.find_next_dir(x, y, snake_dir)
+			next_dir = self._find_next_dir(x, y, snake_dir)
 			if snake_dir == Direction.RIGHT:
 				self.set_tour_number(x * 2, y * 2, tour_num)
 				tour_num += 1
