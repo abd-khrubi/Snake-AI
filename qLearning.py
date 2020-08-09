@@ -85,51 +85,58 @@ class QLearningAgent(Agent):
         snake_y = snake[0][1]
         fruit_position = board.fruit_location
         board_size = board.board_size
-        fruit_x = cyclic(fruit_position[0], board_size)
-        fruit_y = cyclic(fruit_position[1], board_size)
+        fruit_x = fruit_position[0]
+        fruit_y = fruit_position[1]
 
         direction = board.next_move
 
         left = right = up = 0
+        # print(cyclic(5, board_size))
 
         if direction == Direction.LEFT:
-            left = (snake_x, cyclic(snake_y + 1, board_size))
-            up = (cyclic(snake_x - 1, board_size), snake_y)
-            right = (snake_x, cyclic(snake_y - 1, board_size))
+            left = (cyclic(snake_x + 1, board_size), snake_y)
+            up = (snake_x, cyclic(snake_y - 1, board_size))
+            right = (cyclic(snake_x - 1, board_size), snake_y)
 
         elif direction == Direction.RIGHT:
-            left = (snake_x, cyclic(snake_y - 1, board_size))
-            up = (cyclic(snake_x + 1, board_size), snake_y)
-            right = (snake_x, cyclic(snake_y + 1, board_size))
-
-        elif direction == Direction.UP:
             left = (cyclic(snake_x - 1, board_size), snake_y)
-            up = (snake_x, cyclic(snake_y - 1, board_size))
+            up = (snake_x, cyclic(snake_y + 1, board_size))
             right = (cyclic(snake_x + 1, board_size), snake_y)
 
+        elif direction == Direction.UP:
+            left = (snake_x, cyclic(snake_y - 1, board_size))
+            up = (cyclic(snake_x - 1, board_size), snake_y)
+            right = (snake_x, cyclic(snake_y + 1, board_size))
+
         elif direction == Direction.DOWN:
-            left = (cyclic(snake_x + 1, board_size), snake_y)
-            up = (snake_x, cyclic(snake_y + 1, board_size))
-            right = (cyclic(snake_x - 1, board_size), snake_y)
+            left = (snake_x, cyclic(snake_y + 1, board_size))
+            up = (cyclic(snake_x + 1, board_size), snake_y)
+            right = (snake_x, cyclic(snake_y - 1, board_size))
 
         if left in snake or left in board.obstacles:
             state_name = '1'
+        elif left == fruit_position:
+            state_name = '2'
         else:
             state_name = '0'
 
         if up in snake or up in board.obstacles:
             state_name += '1'
+        elif up == fruit_position:
+            state_name += '2'
         else:
             state_name += '0'
 
         if right in snake or right in board.obstacles:
             state_name += '1'
+        elif right == fruit_position:
+            state_name += '2'
         else:
             state_name += '0'
 
-        state_name += str(fruit_x - snake_x) + str(fruit_y - snake_y)
+        state_name += str(abs(fruit_x - snake_x)) + str(abs(fruit_y - snake_y))
 
-        state_name += str(snake[len(snake) - 1][0] - snake_x) + str(snake[len(snake) - 1][1] - snake_y)
+        state_name += str(abs(snake[len(snake) - 1][0] - snake_x)) + str(abs(snake[len(snake) - 1][1] - snake_y))
 
         return state_name
 
@@ -144,19 +151,19 @@ class QLearningAgent(Agent):
         fruit_x = fruit_position[0]
         fruit_y = fruit_position[1]
 
-        up = 1 if (snake_x, cyclic(snake_y - 1, board_size)) in snake or (
-            snake_x, cyclic(snake_y - 1, board_size)) in board.obstacles else 0
-        down = 1 if (snake_x, cyclic(snake_y + 1, board_size)) in snake or (
-            snake_x, cyclic(snake_y + 1, board_size)) in board.obstacles else 0
-        left = 1 if (cyclic(snake_x - 1, board_size), snake_y) in snake or (
-            cyclic(snake_x - 1, board_size), snake_y) in board.obstacles else 0
-        right = 1 if (cyclic(snake_x + 1, board_size), snake_y) in snake or (
-            cyclic(snake_x + 1, board_size), snake_y) in board.obstacles else 0
+        left = 1 if (snake_x, cyclic(snake_y - 1, board_size)) in snake or \
+                    (snake_x, cyclic(snake_y - 1, board_size)) in board.obstacles else 0
+        right = 1 if (snake_x, cyclic(snake_y + 1, board_size)) in snake or \
+                     (snake_x, cyclic(snake_y + 1, board_size)) in board.obstacles else 0
+        up = 1 if (cyclic(snake_x - 1, board_size), snake_y) in snake or \
+                  (cyclic(snake_x - 1, board_size), snake_y) in board.obstacles else 0
+        down = 1 if (cyclic(snake_x + 1, board_size), snake_y) in snake or \
+                    (cyclic(snake_x + 1, board_size), snake_y) in board.obstacles else 0
 
-        up = 2 if (snake_x, cyclic(snake_y - 1, board_size)) in fruit_position else up
-        down = 2 if (snake_x, cyclic(snake_y + 1, board_size)) in fruit_position else down
-        left = 2 if (cyclic(snake_x - 1, board_size), snake_y) in fruit_position else left
-        right = 2 if (cyclic(snake_x + 1, board_size), snake_y) in fruit_position else right
+        left = 2 if (snake_x, cyclic(snake_y - 1, board_size)) == fruit_position else left
+        right = 2 if (snake_x, cyclic(snake_y + 1, board_size)) == fruit_position else right
+        up = 2 if (cyclic(snake_x - 1, board_size), snake_y) == fruit_position else up
+        down = 2 if (cyclic(snake_x + 1, board_size), snake_y) == fruit_position else down
 
         state_name = str(left) + str(up) + str(right) + str(down)
 
@@ -166,33 +173,32 @@ class QLearningAgent(Agent):
         if fruit_relative_x < 0 and fruit_relative_y < 0:
             state_name += '10000000'
 
-        elif fruit_relative_x == 0 and fruit_relative_y < 0:
+        elif fruit_relative_x < 0 and fruit_relative_y == 0:
             state_name += '01000000'
 
-        elif fruit_relative_x > 0 and fruit_relative_y < 0:
+        elif fruit_relative_x < 0 and fruit_relative_y > 0:
             state_name += '00100000'
 
-        elif fruit_relative_x > 0 and fruit_relative_y == 0:
+        elif fruit_relative_x == 0 and fruit_relative_y > 0:
             state_name += '00010000'
 
         elif fruit_relative_x > 0 and fruit_relative_y > 0:
             state_name += '00001000'
 
-        elif fruit_relative_x == 0 and fruit_relative_y > 0:
+        elif fruit_relative_x > 0 and fruit_relative_y == 0:
             state_name += '00000100'
 
-        elif fruit_relative_x < 0 and fruit_relative_y > 0:
+        elif fruit_relative_x > 0 and fruit_relative_y < 0:
             state_name += '00000010'
 
-        elif fruit_relative_x < 0 and fruit_relative_y == 0:
+        elif fruit_relative_x == 0 and fruit_relative_y < 0:
             state_name += '00000001'
-
-        # state_name += str(manhattanDistance([snake_x, snake_y], [fruit_x, fruit_y]))
 
         return state_name
 
     def next_move(self, board):
         current_state = self.get_current_state(board)
+
         action = self.getAction(current_state)
 
         while True:
@@ -284,7 +290,7 @@ class QLearningAgent(Agent):
         legal_actions = self.getLegalActions(state)
         action = None
         if self.counter > 1000 and self.fruit_position == self.current_fruit_position:
-            print(str(self.counter) + ' random................................................')
+            # print(str(self.counter) + ' random................................................')
             action = random.choice(legal_actions)
             self.counter = 0
 
