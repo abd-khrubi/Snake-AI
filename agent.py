@@ -1,5 +1,6 @@
 from copy import deepcopy
 
+from HamiltonianCycle import Maze
 from config import Direction
 from util import PriorityQueueWithFunction, cyclic
 
@@ -50,17 +51,16 @@ class Agent:
 		raise Exception('Method not implemented!')
 
 	def reward(self, move, reward, after_hit=True):
-		raise Exception('Method not implemented!')
+		pass
 
 	def update_current_state(self, board):
-		raise Exception('Method not implemented!')
+		pass
 
 	def update_new_state(self, board):
-		raise Exception('Method not implemented!')
+		pass
 
 	def update_fruit_location(self, new_location):
-		raise Exception('Method not implemented!')
-
+		pass
 
 
 class AStarAgent(Agent):
@@ -100,14 +100,78 @@ class AStarAgent(Agent):
 				fringe.push(new_state)
 		return []
 
-	def reward(self, move, reward, after_hit=True):
-		pass
 
-	def update_new_state(self, board):
-		pass
+class HamiltonianAgent(Agent):
+	def __init__(self, board_Size):
+		self.maze: Maze = Maze(board_Size)
+		self.maze.generate()
+		self.path = []
 
-	def update_current_state(self, board):
-		pass
+	def next_move(self, board):
+		y, x = board.snake[0]
+		tail_y, tail_x = board.snake[~0]
+		fruit_y, fruit_x = board.fruit_location
 
-	def update_fruit_location(self, new_location):
-		pass
+		head_pos = self.maze.get_path_number(x, y)
+		tail_pos = self.maze.get_path_number(tail_x, tail_y)
+		fruit_pos = self.maze.get_path_number(fruit_x, fruit_y)
+
+		distance_to_fruit = self.maze.path_distance(head_pos, fruit_pos)
+		distance_to_tail = self.maze.path_distance(head_pos, tail_pos)
+
+		cutting_amount_available = distance_to_tail - 5
+		empty_squares = self.maze.arena_size - len(board.snake) - 3
+
+		if empty_squares < self.maze.arena_size / 2:
+			cutting_amount_available = 0
+		elif distance_to_fruit < distance_to_tail:
+			cutting_amount_available -= 1
+			if (distance_to_tail - distance_to_fruit) * 4 > empty_squares:
+				cutting_amount_available -= 10
+		cutting_amount_desired = distance_to_fruit
+		if cutting_amount_desired < cutting_amount_available:
+			cutting_amount_available = cutting_amount_desired
+		if cutting_amount_available < 0:
+			cutting_amount_available = 0
+
+		state: State = State(board, 0, lambda s: 0, None)
+		legal_moves = state.get_legal_action()
+		can_go_right = Direction.RIGHT in legal_moves and x < board.board_size - 1
+		can_go_left = Direction.LEFT in legal_moves and x > 0
+		can_go_down = Direction.DOWN in legal_moves and y < board.board_size - 1
+		can_go_up = Direction.UP in legal_moves and y > 0
+
+		best_dir = None
+		best_dist = -1
+
+		if can_go_right:
+			dist = self.maze.path_distance(head_pos, self.maze.get_path_number(x + 1, y))
+			if cutting_amount_available >= dist > best_dist:
+				best_dir = Direction.RIGHT
+				best_dist = dist
+		if can_go_left:
+			dist = self.maze.path_distance(head_pos, self.maze.get_path_number(x - 1, y))
+			if cutting_amount_available >= dist > best_dist:
+				best_dir = Direction.LEFT
+				best_dist = dist
+		if can_go_up:
+			dist = self.maze.path_distance(head_pos, self.maze.get_path_number(x, y - 1))
+			if cutting_amount_available >= dist > best_dist:
+				best_dir = Direction.UP
+				best_dist = dist
+		if can_go_down:
+			dist = self.maze.path_distance(head_pos, self.maze.get_path_number(x, y + 1))
+			if cutting_amount_available >= dist > best_dist:
+				best_dir = Direction.DOWN
+				best_dist = dist
+
+		if best_dist >= 0:
+			return best_dir
+		if can_go_up:
+			return Direction.UP
+		elif can_go_left:
+			return Direction.LEFT
+		elif can_go_down:
+			return Direction.DOWN
+		else:
+			return Direction.RIGHT

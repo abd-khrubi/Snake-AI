@@ -209,7 +209,7 @@ def score_helper(scores, num):
 
 if __name__ == '__main__':
 	agent = AStarAgent(heuristics.compact_heuristics)
-	game = Game(config.BOARD_SIZE, 0, agent=agent)
+	game = Game(config.BOARD_SIZE, 0, agent=agent, display_class=DisplayEngine.GUIDisplayEngine)
 	for _ in range(100):
 		game.run()
 

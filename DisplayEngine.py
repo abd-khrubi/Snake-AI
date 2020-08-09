@@ -1,6 +1,6 @@
 import pygame
 
-from config import GameState
+import config
 
 
 class DisplayEngine:
@@ -48,8 +48,8 @@ class GUIDisplayEngine(DisplayEngine):
 			if event.type == pygame.QUIT:
 				pygame.quit()
 			if event.type == pygame.KEYDOWN:
-				if game.state == GameState.PAUSED:
-					game.state = GameState.RUNNING
+				if game.state == config.GameState.PAUSED:
+					game.state = config.GameState.RUNNING
 				if event.key == pygame.K_LEFT and board.next_move != config.Direction.RIGHT:
 					self.input_cb(config.Direction.LEFT)
 				elif event.key == pygame.K_UP and board.next_move != config.Direction.DOWN:
@@ -61,13 +61,13 @@ class GUIDisplayEngine(DisplayEngine):
 
 		self.screen.fill((0, 0, 0))
 		block_size = config.BLOCK_SIZE
-		for row in range(config.BOARD_SIZE):
-			for col in range(config.BOARD_SIZE):
-				rect = pygame.Rect(
-					row * block_size, col * block_size, block_size,
-					block_size
-				)
-				pygame.draw.rect(self.screen, (200, 200, 200), rect, 1)
+		# for row in range(config.BOARD_SIZE):
+		# 	for col in range(config.BOARD_SIZE):
+		# 		rect = pygame.Rect(
+		# 			row * block_size, col * block_size, block_size,
+		# 			block_size
+		# 		)
+		# 		pygame.draw.rect(self.screen, (200, 200, 200), rect, 1)
 		for row in range(config.BOARD_SIZE):
 			for col in range(config.BOARD_SIZE):
 				i = row * block_size
@@ -86,6 +86,7 @@ class GUIDisplayEngine(DisplayEngine):
 
 				elif (row, col) in board.obstacles:
 					pygame.draw.rect(self.screen, (255, 0, 0), rect)
+		pygame.display.update()
 		# draw obstacle
 
 
