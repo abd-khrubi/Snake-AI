@@ -1,10 +1,6 @@
-import config
 import pygame
 
-from config import Direction, GameState
-
-
-# from pygame_input import Inputs, Button
+import config
 
 
 class DisplayEngine:
@@ -52,8 +48,8 @@ class GUIDisplayEngine(DisplayEngine):
 			if event.type == pygame.QUIT:
 				pygame.quit()
 			if event.type == pygame.KEYDOWN:
-				if game.state == GameState.PAUSED:
-					game.state = GameState.RUNNING
+				if game.state == config.GameState.PAUSED:
+					game.state = config.GameState.RUNNING
 				if event.key == pygame.K_LEFT and board.next_move != config.Direction.RIGHT:
 					self.input_cb(config.Direction.LEFT)
 				elif event.key == pygame.K_UP and board.next_move != config.Direction.DOWN:
@@ -90,14 +86,10 @@ class GUIDisplayEngine(DisplayEngine):
 
 				elif (row, col) in board.obstacles:
 					pygame.draw.rect(self.screen, (255, 0, 0), rect)
-				# draw obstacle
+		pygame.display.update()
+		# draw obstacle
 
-	# pygame.display.update()
 
-
-if __name__ == '__main__':
-	disp = GUIDisplayEngine()
-	disp.screen.fill((0, 0, 0))
-	while 1:
-		disp.render(None)
-# pygame.display.update()
+class SilentDisplayEngine(DisplayEngine):
+	def render(self, game):
+		pass

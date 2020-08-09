@@ -8,7 +8,7 @@ from util import PriorityQueueWithFunction, cyclic
 class State:
 	def __init__(self, board, g, heu_function, path):
 		self.board = board
-		self.h = heu_function(board)
+		self.h = heu_function(self)
 		self.g = g
 		self.f = self.h + self.g
 		self.path = path
