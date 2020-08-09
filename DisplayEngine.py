@@ -1,10 +1,6 @@
-import config
 import pygame
 
-from config import Direction, GameState
-
-
-# from pygame_input import Inputs, Button
+from config import GameState
 
 
 class DisplayEngine:
@@ -90,14 +86,9 @@ class GUIDisplayEngine(DisplayEngine):
 
 				elif (row, col) in board.obstacles:
 					pygame.draw.rect(self.screen, (255, 0, 0), rect)
-				# draw obstacle
-
-	# pygame.display.update()
+		# draw obstacle
 
 
-if __name__ == '__main__':
-	disp = GUIDisplayEngine()
-	disp.screen.fill((0, 0, 0))
-	while 1:
-		disp.render(None)
-# pygame.display.update()
+class SilentDisplayEngine(DisplayEngine):
+	def render(self, game):
+		pass

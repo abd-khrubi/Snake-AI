@@ -1,7 +1,6 @@
-import random, math
+import random
 from agent import Agent
 from config import Direction
-from game import *
 from util import cyclic, Counter
 import util
 
