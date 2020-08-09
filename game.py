@@ -3,7 +3,7 @@ import pygame
 import DisplayEngine
 import config
 import heuristics
-from agent import AStarAgent
+from agent import AStarAgent, HamiltonianAgent, ImprovedHamAgent
 from qLearning import *
 
 
@@ -208,7 +208,7 @@ def score_helper(scores, num):
 
 
 if __name__ == '__main__':
-	agent = AStarAgent(heuristics.compact_heuristics)
+	agent = ImprovedHamAgent(config.BOARD_SIZE)
 	game = Game(config.BOARD_SIZE, 0, agent=agent, display_class=DisplayEngine.GUIDisplayEngine)
 	for _ in range(100):
 		game.run()

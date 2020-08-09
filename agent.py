@@ -1,5 +1,7 @@
 from copy import deepcopy
 
+import numpy as np
+
 from HamiltonianCycle import Maze
 from config import Direction
 from util import PriorityQueueWithFunction, cyclic
@@ -122,7 +124,7 @@ class HamiltonianAgent(Agent):
 		cutting_amount_available = distance_to_tail - 5
 		empty_squares = self.maze.arena_size - len(board.snake) - 3
 
-		if empty_squares < self.maze.arena_size / 2:
+		if empty_squares < self.maze.arena_size / 4:
 			cutting_amount_available = 0
 		elif distance_to_fruit < distance_to_tail:
 			cutting_amount_available -= 1
@@ -175,3 +177,76 @@ class HamiltonianAgent(Agent):
 			return Direction.DOWN
 		else:
 			return Direction.RIGHT
+
+
+class ImprovedHamAgent(Agent):
+	def __init__(self, board_size):
+		self.maze = Maze(board_size)
+		self.maze.generate()
+		self.moves = []
+
+	def next_move(self, board):
+		if not self.moves:
+			self.moves = self.search(board)
+			if not self.moves:
+				return None
+		return self.moves.pop()
+
+	def search(self, init_board):
+		fringe = PriorityQueueWithFunction(lambda state: state.f)
+		init_state = State(init_board, 0, self.heu_func, [])
+		fringe.push(init_state)
+
+		visited = []
+
+		while not fringe.isEmpty():
+			item: State = fringe.pop()
+			if item in visited:
+				continue
+			visited.append(item)
+			if item.is_goal():
+				return item.path
+
+			for move in item.get_legal_action():
+				if not self.legal(move, item):
+					continue
+				new_board = deepcopy(item.board)
+				new_board.next_move = move
+				new_board.step()
+				new_state = State(new_board, item.g + 1, self.heu_func, [move] + item.path)
+				fringe.push(new_state)
+		return []
+
+	def legal(self, action: Direction, state):
+		row, col = state.board.snake[0]
+		if action == Direction.UP:
+			row -= 1
+		elif action == Direction.DOWN:
+			row += 1
+		elif action == Direction.LEFT:
+			col -= 1
+		elif action == Direction.RIGHT:
+			col += 1
+		row = cyclic(row, state.board.board_size)
+		col = cyclic(col, state.board.board_size)
+		# if row < 0 or row >= state.board.board_size or col < 0 or col >= state.board.board_size:
+		# 	return False
+		tail_y, tail_x = state.board.snake[~0]
+		tail_pos = self.maze.get_path_number(tail_x, tail_y)
+		normalized_snake = np.asarray(
+			list(map(lambda part: self.maze.get_path_number(part[1], part[0]), state.board.snake)))
+		normalized_snake = (normalized_snake - tail_pos + self.maze.arena_size) % self.maze.arena_size
+		pos = self.maze.get_path_number(col, row)
+		normalized_pos = (pos - tail_pos + self.maze.arena_size) % self.maze.arena_size
+		if normalized_pos < normalized_snake[0]:
+			return False
+		return True
+
+	def heu_func(self, state):
+		head_y, head_x = state.board.snake[0]
+		fruit_y, fruit_x = state.board.fruit_location
+
+		head_pos = self.maze.get_path_number(head_x, head_y)
+		fruit_pos = self.maze.get_path_number(fruit_x, fruit_y)
+
+		return self.maze.path_distance(head_pos, fruit_pos)
