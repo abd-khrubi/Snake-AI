@@ -17,6 +17,10 @@ class Maze:
 		self.nodes = [Node() for _ in range(self.arena_size // 4)]
 		self.tour_to_number = np.zeros(self.arena_size, dtype=int)
 
+	def reset(self):
+		self.tour_to_number = np.zeros(self.arena_size, dtype=int)
+		self.generate()
+
 	def get_path_number(self, x, y):
 		return self.tour_to_number[(x + self.board_size * y) % self.arena_size]
 
