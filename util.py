@@ -31,7 +31,7 @@ def cyclic_manhattan_distance(xy1, xy2, bound):
 
 
 def squareness(snake):
-    squareness = 0
+
     max_y, max_x, min_x, min_y = 0, 0, 0, 0
     for square in snake:
         if square[0] > max_x:
@@ -42,11 +42,11 @@ def squareness(snake):
             max_y = square[1]
         if square[1] < min_y:
             min_y = square[1]
-    for i in range(min_x, max_x + 1):
-        for j in range(min_y, max_y + 1):
-            if (i, j) not in snake:
-                squareness += 1
-    return squareness
+    # for i in range(min_x, max_x + 1):  # max_x - min_x
+    #     for j in range(min_y, max_y + 1):  # min_y - max_y
+    #         if (i, j) not in snake:   # (max_x - min_x)*(min_y - max_y) - len(snake)
+    #             squareness += 1
+    return (max_x - min_x) * (min_y - max_y) - len(snake)
 
 
 def compactness(snake):
@@ -63,17 +63,21 @@ def compactness(snake):
 def connectivity(board):
     snake = board.snake
     empty = []
-    for i in range(board.board_size):
-        for j in range(board.board_size):
-            if (i, j) not in board.obstacles and (i, j) not in snake:
-                empty.append((i, j))
-    random_field = 0
+    # for i in range(board.board_size):
+    #     for j in range(board.board_size):
+    #         if (i, j) not in board.obstacles and (i, j) not in snake:
+    #             empty.append((i, j))
+
+    empty = [(i, j) for i in range(board.board_size) for j in range(board.board_size)
+             if (i, j) not in board.obstacles and (i, j) not in snake]
+
     if len(empty) > 1:
         random_field = empty[random.randint(0, len(empty) - 1)]
     else:
         return 0
     reached = [random_field]
     empty.remove(random_field)
+
     while len(reached) > 0:
         curr_field = reached[0]
         reached.remove(curr_field)
@@ -95,17 +99,19 @@ def connectivity(board):
 
 
 def dead_end(board):
-    empty = []
     snake = board.snake
-    for i in range(board.board_size):
-        for j in range(board.board_size):
-            if (i, j) not in board.obstacles and (i, j) not in snake:
-                empty.append((i, j))
+    # empty = []
+    # for i in range(board.board_size):
+    #     for j in range(board.board_size):
+    #         if (i, j) not in board.obstacles and (i, j) not in snake:
+    #             empty.append((i, j))
+
+    empty = [(i, j) for i in range(board.board_size) for j in range(board.board_size)
+             if (i, j) not in board.obstacles and (i, j) not in snake]
     snake_head = snake[0]
     reached = [snake_head]
 
     while len(reached) > 0:
-
         curr_field = reached[0]
         reached.remove(curr_field)
         up, down, right, left = (curr_field[0], curr_field[1] + 1), (curr_field[0], curr_field[1] - 1), \
@@ -125,11 +131,10 @@ def dead_end(board):
     return len(empty)
 
 
+
 """
  Data structures useful for implementing SearchAgents
 """
-
-
 class Stack:
     "A container with a last-in-first-out (LIFO) queuing policy."
 
