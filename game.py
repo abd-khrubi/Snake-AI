@@ -5,7 +5,7 @@ import config
 import heuristics
 from agent import AStarAgent, HamiltonianAgent, ImprovedHamAgent
 from qLearning import *
-
+import time
 
 class Game:
 	def __init__(self, board_size, obstacle_chance, agent=None, display_class=DisplayEngine.SilentDisplayEngine,
@@ -195,21 +195,3 @@ class Board:
 
 	def __eq__(self, other):
 		return isinstance(other, Board) and other.snake[0] == self.snake[0]
-
-
-def score_helper(scores, num):
-	scores_sum = sum(scores)
-	counter = 0
-	for i in scores:
-		if i >= num:
-			counter += 1
-
-	return (counter / scores_sum) * 100
-
-
-if __name__ == '__main__':
-	agent = ImprovedHamAgent(config.BOARD_SIZE)
-	game = Game(config.BOARD_SIZE, 0, agent=agent, display_class=DisplayEngine.GUIDisplayEngine)
-	for _ in range(100):
-		game.run()
-
