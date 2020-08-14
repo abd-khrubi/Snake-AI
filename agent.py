@@ -124,7 +124,7 @@ class HamiltonianAgent(Agent):
 		cutting_amount_available = distance_to_tail - 5
 		empty_squares = self.maze.arena_size - len(board.snake) - 3
 
-		if empty_squares < self.maze.arena_size / 4:
+		if empty_squares < self.maze.arena_size / 2:
 			cutting_amount_available = 0
 		elif distance_to_fruit < distance_to_tail:
 			cutting_amount_available -= 1
