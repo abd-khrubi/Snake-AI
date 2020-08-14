@@ -195,18 +195,3 @@ class Board:
 
 	def __eq__(self, other):
 		return isinstance(other, Board) and other.snake[0] == self.snake[0]
-
-
-if __name__ == '__main__':
-	agent = AStarAgent(heuristics.compact_heuristics)
-	game = Game(config.BOARD_SIZE, 0, agent=agent, display_class=DisplayEngine.SilentDisplayEngine)
-	n = 250
-	sum = 0
-	start = time.time()
-	for _ in range(n):
-		print(_)
-		game.run()
-		sum += len(game.board.snake)
-	end = time.time()
-	print(f"Avg score is {sum/n}")
-	print(f"Avg Execution time is {(end-start)/n}")

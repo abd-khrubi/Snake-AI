@@ -4,7 +4,7 @@ import enum
 	Configuration Values for the game
 """
 
-BOARD_SIZE = 6
+BOARD_SIZE = 16
 
 """
 	GUI Constants
@@ -12,7 +12,8 @@ BOARD_SIZE = 6
 GUI_HEIGHT = 700
 GUI_WIDTH = 700
 BLOCK_SIZE = GUI_WIDTH / BOARD_SIZE
-FRAME_RATE = 1200
+
+FRAME_RATE = 60
 
 """
 	Enums
