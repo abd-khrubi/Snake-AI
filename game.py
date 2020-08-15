@@ -1,11 +1,13 @@
+from optparse import OptionParser
+
 import pygame
 
 import DisplayEngine
 import config
-import heuristics
-from agent import AStarAgent, HamiltonianAgent, ImprovedHamAgent
+from agent import *
+from heuristics import *
 from qLearning import *
-import time
+
 
 class Game:
 	def __init__(self, board_size, obstacle_chance, agent=None, display_class=DisplayEngine.SilentDisplayEngine,
@@ -28,8 +30,10 @@ class Game:
 			self.agent.update_current_state(self.board)
 
 			move = self.agent.next_move(self.board)
-			if move:
-				self.board.next_move = move
+			if not move:
+				break
+
+			self.board.next_move = move
 			self.board.step()
 
 			self.agent.update_new_state(self.board)
@@ -195,3 +199,114 @@ class Board:
 
 	def __eq__(self, other):
 		return isinstance(other, Board) and other.snake[0] == self.snake[0]
+
+
+def validate_percentage_cb(option, opt_str, value, parser: OptionParser):
+	if value < 0 or value > 1:
+		print('[ERROR] Percentage values should be between 0 and 1. Defaulting to 0')
+		setattr(parser.values, option.dest, 0)
+	else:
+		setattr(parser.values, option.dest, value)
+
+
+def main():
+	usage_str = """
+	USAGE:      python3 game.py <options>
+	"""
+	parser = OptionParser(usage_str)
+
+	parser.add_option(
+		'-s', '--size', dest='board_size',
+		help='The size of the board.With Hamiltonian cycle agent it must be even number',
+		default=config.BOARD_SIZE, type=int
+	)
+	parser.add_option(
+		'-o', '--obstacle-chance', help='Chance to spawn obstacles in the board',
+		default=0.0, type=float, metavar='[0-1]',
+		action='callback', callback=validate_percentage_cb
+	)
+
+	parser.add_option('-n', '--num-of-games', help='Number of games to play', default=1, type=int)
+	parser.add_option('-f', '--frame-rate', help='Limit frame rate of the game', default=config.FRAME_RATE, type=int)
+
+	agents = ['astar', 'Q', 'hamiltonian', 'hamiltonian-astar']
+	heus = ['manhattan', 'cyclic-manhattan', 'compact', 'wighted-compact']
+	parser.add_option(
+		'--agent', choices=agents, help=f'The agent to drive the snake',
+		default=agents[0], type='choice', metavar=agents
+	)
+	parser.add_option('--heu', choices=heus, help=f'The heuristic for the A* agent', default=heus[0], metavar=heus)
+	parser.add_option('--alpha', help='Alpha value for Q learning agent', default=0.9, type=float)
+	parser.add_option('--gamma', help='Gamma value for Q learning agent', default=0.85, type=float)
+	parser.add_option('--random-rate', help='Random rate value for Q learning agent', default=0.05, type=float)
+
+	displays = ['GUI', 'CLI', 'Silent']
+	parser.add_option(
+		'--display', metavar=displays, choices=displays, default='GUI',
+		help='Display type for the game'
+	)
+
+	args, _ = parser.parse_args()
+
+	config.FRAME_RATE = args.frame_rate
+	config.BLOCK_SIZE = config.GUI_WIDTH / args.board_size
+
+	display = get_display(args.display)
+	heu = get_heu(args.heu)
+	agent = get_agent(
+		args.agent,
+		size=args.board_size, heu=heu, alpha=args.alpha, gamma=args.gamma, rand=args.random_rate
+	)
+
+	game = Game(args.board_size, args.obstacle_chance, agent, display)
+
+	scores = []
+	for _ in range(args.num_of_games):
+		game.run()
+		scores.append(len(game.board.snake))
+
+	avg = sum(scores) / args.num_of_games
+	avg_coverage = avg / (args.board_size * args.board_size)
+	print(f'Finished with average score of {avg}, average board coverage: {avg_coverage * 100: 0.2f}%')
+
+
+def get_heu(name: str):
+	name = name.lower()
+	if name == 'manhattan':
+		return manhattan_distance
+	elif name == 'cyclic-manhattan':
+		return cyclic_manhattan_distance
+	elif name == 'compact':
+		return compact_heuristics
+	elif name == 'weighted-compact':
+		return weighed_compact_heuristics
+
+
+def get_agent(name: str, **kwargs):
+	name = name.lower()
+	if name == 'astar':
+		return AStarAgent(kwargs['heu'])
+	elif name == 'Q':
+		alpha = kwargs['alpha']
+		gamma = kwargs['gamma']
+		rand = kwargs['rand']
+		return QLearningAgent(alpha, gamma, rand)
+	elif name == 'hamiltonian':
+		board_size = kwargs['size']
+		return HamiltonianAgent(board_size)
+	elif name == 'hamiltonian-astar':
+		board_size = kwargs['size']
+		return ImprovedHamAgent(board_size)
+
+
+def get_display(name: str):
+	if name == 'GUI':
+		return DisplayEngine.GUIDisplayEngine
+	elif name == 'CLI':
+		return DisplayEngine.CliDisplayEngine
+	elif name == 'Silent':
+		return DisplayEngine.SilentDisplayEngine
+
+
+if __name__ == '__main__':
+	main()

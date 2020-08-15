@@ -104,8 +104,8 @@ class AStarAgent(Agent):
 
 
 class HamiltonianAgent(Agent):
-	def __init__(self, board_Size):
-		self.maze: Maze = Maze(board_Size)
+	def __init__(self, board_size):
+		self.maze: Maze = Maze(board_size)
 		self.maze.generate()
 		self.path = []
 
