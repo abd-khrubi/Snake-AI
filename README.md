@@ -2,5 +2,5 @@
 ## Snake Game
 
 ### How to use
-* `pip3 install -r rquirments.txt`  
+* `pip3 install -r requirements.txt`  
 * `python3 game.py`
