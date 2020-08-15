@@ -1,6 +1,7 @@
 import pygame
 
 import config
+from util import color_interpolate
 
 
 class DisplayEngine:
@@ -59,15 +60,8 @@ class GUIDisplayEngine(DisplayEngine):
 				elif event.key == pygame.K_RIGHT and board.next_move != config.Direction.LEFT:
 					self.input_cb(config.Direction.RIGHT)
 
-		self.screen.fill((0, 0, 0))
+		self.screen.fill((25,25,25))
 		block_size = config.BLOCK_SIZE
-		# for row in range(config.BOARD_SIZE):
-		# 	for col in range(config.BOARD_SIZE):
-		# 		rect = pygame.Rect(
-		# 			row * block_size, col * block_size, block_size,
-		# 			block_size
-		# 		)
-		# 		pygame.draw.rect(self.screen, (200, 200, 200), rect, 1)
 		for row in range(config.BOARD_SIZE):
 			for col in range(config.BOARD_SIZE):
 				i = row * block_size
@@ -75,19 +69,23 @@ class GUIDisplayEngine(DisplayEngine):
 				rect = pygame.Rect(j, i, block_size, block_size)
 				if (row, col) == board.snake[0]:
 					# draw head
-					pygame.draw.rect(self.screen, (0, 0, 225), rect)
+					pygame.draw.rect(self.screen, (37, 107, 0), rect)
 
 				elif (row, col) == board.fruit_location:
 					# draw fruit
-					pygame.draw.rect(self.screen, (0, 255, 0), rect)
+					pygame.draw.rect(self.screen, (255, 201, 0), rect)
 				elif (row, col) in board.snake:
-					pygame.draw.rect(self.screen, (255, 0, 255), rect)
-				# draw body part
+					# draw body part
+					col1 = (118, 176, 65)
+					white = (223, 245, 203)
+					f = board.snake.index((row, col)) / len(board.snake)
+					col = color_interpolate(col1, white, f)
+					pygame.draw.rect(self.screen, col, rect)
 
 				elif (row, col) in board.obstacles:
-					pygame.draw.rect(self.screen, (255, 0, 0), rect)
+					pygame.draw.rect(self.screen, (228, 87, 46), rect)
 		pygame.display.update()
-		# draw obstacle
+	# draw obstacle
 
 
 class SilentDisplayEngine(DisplayEngine):
