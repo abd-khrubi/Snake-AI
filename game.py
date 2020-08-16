@@ -286,11 +286,14 @@ def get_agent(name: str, **kwargs):
 	name = name.lower()
 	if name == 'astar':
 		return AStarAgent(kwargs['heu'])
-	elif name == 'Q':
+	elif name == 'q':
+		print('hi')
 		alpha = kwargs['alpha']
 		gamma = kwargs['gamma']
 		rand = kwargs['rand']
-		return QLearningAgent(alpha, gamma, rand)
+		agent = QLearningAgent(alpha, gamma, rand)
+		agent.read_qtable('50kLearn')
+		return agent
 	elif name == 'hamiltonian':
 		board_size = kwargs['size']
 		return HamiltonianAgent(board_size)
